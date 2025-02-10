@@ -33,8 +33,8 @@
             group_userinfo = new GroupBox();
             lbl_testcase = new Label();
             lbl_suite = new Label();
-            textBox2 = new TextBox();
-            textBox1 = new TextBox();
+            txt_scenario = new TextBox();
+            txt_suite = new TextBox();
             lbl_testenv = new Label();
             cbb_env = new ComboBox();
             label4 = new Label();
@@ -63,8 +63,8 @@
             // 
             group_userinfo.Controls.Add(lbl_testcase);
             group_userinfo.Controls.Add(lbl_suite);
-            group_userinfo.Controls.Add(textBox2);
-            group_userinfo.Controls.Add(textBox1);
+            group_userinfo.Controls.Add(txt_scenario);
+            group_userinfo.Controls.Add(txt_suite);
             group_userinfo.Controls.Add(lbl_testenv);
             group_userinfo.Controls.Add(cbb_env);
             group_userinfo.Controls.Add(label4);
@@ -79,6 +79,7 @@
             group_userinfo.TabIndex = 1;
             group_userinfo.TabStop = false;
             group_userinfo.Text = "Dados do testador";
+            group_userinfo.Enter += group_userinfo_Enter;
             // 
             // lbl_testcase
             // 
@@ -98,19 +99,19 @@
             lbl_suite.TabIndex = 12;
             lbl_suite.Text = "Suíte";
             // 
-            // textBox2
+            // txt_scenario
             // 
-            textBox2.Location = new Point(144, 327);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(386, 31);
-            textBox2.TabIndex = 11;
+            txt_scenario.Location = new Point(144, 327);
+            txt_scenario.Name = "txt_scenario";
+            txt_scenario.Size = new Size(386, 31);
+            txt_scenario.TabIndex = 11;
             // 
-            // textBox1
+            // txt_suite
             // 
-            textBox1.Location = new Point(144, 269);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(386, 31);
-            textBox1.TabIndex = 10;
+            txt_suite.Location = new Point(144, 269);
+            txt_suite.Name = "txt_suite";
+            txt_suite.Size = new Size(386, 31);
+            txt_suite.TabIndex = 10;
             // 
             // lbl_testenv
             // 
@@ -210,6 +211,7 @@
             btn_start.TabIndex = 9;
             btn_start.Text = "Iniciar";
             btn_start.UseVisualStyleBackColor = true;
+            btn_start.Click += btn_start_Click;
             // 
             // MainApp
             // 
@@ -227,8 +229,8 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "MainApp";
-            StartPosition = FormStartPosition.CenterScreen;
             Text = "App";
+            Load += MainApp_Load;
             group_userinfo.ResumeLayout(false);
             group_userinfo.PerformLayout();
             ResumeLayout(false);
@@ -250,9 +252,9 @@
         private ComboBox cbb_env;
         private Button btn_settings;
         private Button btn_start;
-        private TextBox textBox1;
+        private TextBox txt_suite;
         private Label lbl_testcase;
         private Label lbl_suite;
-        private TextBox textBox2;
+        private TextBox txt_scenario;
     }
 }
