@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace QAAutomatedEvidence
 {
     public partial class MainApp : Form
@@ -26,9 +28,16 @@ namespace QAAutomatedEvidence
             notifyIcon1.Visible = true;
             this.Hide(); // Esconde o FormPrincipal
 
-            // Abre o segundo formul�rio
-            //Running formSecundario = new Running();
-           // formSecundario.Show();
+
+            Running formSecundario = new Running(this.txt_scenario.Text, this.txt_suite.Text, this.cbb_env.SelectedItem.ToString());
+            formSecundario.Show();
+        }
+
+        public void RestaurarDaBandeja()
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            notifyIcon1.Visible = false;
         }
 
         private void group_userinfo_Enter(object sender, EventArgs e)
@@ -39,9 +48,11 @@ namespace QAAutomatedEvidence
         private void MainApp_Load(object sender, EventArgs e)
         {
             // Configurar informações do usuário
-            this.username.Text = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            this.login.Text = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            this.username.Text = System.DirectoryServices.AccountManagement.UserPrincipal.Current.DisplayName;
             this.datetime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
             this.lbl_error.Text = "";
+            this.lnk_lastPath.Visible = false;
 
             // Configurar ComboBox
             List<string> opcoes = new List<string> { "UAT", "PROD", "DEV" };
@@ -65,6 +76,9 @@ namespace QAAutomatedEvidence
 
             notifyIcon1.DoubleClick += (s, e) => AbrirApp(s, e);
             notifyIcon1.MouseClick += NotifyIcon1_MouseClick; // Adicionar evento de clique direito
+
+            // Running formSecundario = new Running("cenário1", "testeSuite", "UAT");
+            //formSecundario.GerarRelatorio("Sucesso");
         }
 
         private void NotifyIcon1_MouseClick(object sender, MouseEventArgs e)
@@ -85,10 +99,27 @@ namespace QAAutomatedEvidence
             }
         }
 
+        public void AtualizarCaminhoEvidencia(string caminho)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => AtualizarCaminhoEvidencia(caminho)));
+            }
+            else
+            {
+                lnk_lastPath.Text = "Abrir Evidências da ultima execução";
+                lnk_lastPath.Links.Clear();
+                lnk_lastPath.Links.Add(0, lnk_lastPath.Text.Length, caminho);
+                lnk_lastPath.Visible = true; // Garante que o LabelLink fique visível
+            }
+        }
+
+
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            notifyIcon1.Dispose(); 
+            notifyIcon1.Dispose();
             Application.Exit();
         }
 
@@ -106,8 +137,17 @@ namespace QAAutomatedEvidence
 
         private void FecharApp(object sender, EventArgs e)
         {
-            notifyIcon1.Dispose(); 
+            notifyIcon1.Dispose();
             Application.Exit();
+        }
+
+        private void lnk_lastPath_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            string caminho = e.Link.LinkData as string;
+            if (!string.IsNullOrEmpty(caminho) && Directory.Exists(caminho))
+            {
+                Process.Start("explorer.exe", caminho);
+            }
         }
     }
 }

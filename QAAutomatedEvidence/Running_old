@@ -1,0 +1,405 @@
+using MigraDoc.DocumentObjectModel;
+using MigraDoc.DocumentObjectModel.Tables;
+using MigraDoc.Rendering;
+using System.Data;
+using System.Diagnostics.Eventing.Reader;
+using System.Runtime.InteropServices;
+
+namespace QAAutomatedEvidence
+{
+    public partial class Running : Form
+    {
+        private System.Windows.Forms.Timer topMostTimer;
+        private static IntPtr hookID = IntPtr.Zero;
+        private static string evidenciasPath = @"C:\temp\";
+        private string testname;
+        private string suitename;
+        private string environment;
+        private List<SectionData> sections = new List<SectionData>();
+
+        public Running()
+        {
+
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Running"/> class with specified text parameters.
+        /// </summary>
+        /// <param name="text1">The first text is scenario.</param>
+        /// <param name="text2">The second Suite.</param>
+        /// <param name="selectedText">The selected text Combobox environment index.</param>
+        public Running(string scenario, string suite, string cbbIndex)
+        {
+            if (!sections.Any(s => s.Name == "Default"))
+            {
+                sections.Add(new SectionData("Default"));
+            }
+
+            this.testname = scenario;
+            this.suitename = suite;
+            this.environment = cbbIndex;
+            InitializeComponent();
+
+            // Mantém o formulário sempre no topo
+            this.TopMost = true;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+
+            // Posiciona no canto inferior direito
+            PositionInBottomRight();
+
+            // Garante que a pasta C:\temp exista
+            if (!Directory.Exists(evidenciasPath))
+            {
+                Directory.CreateDirectory(evidenciasPath);
+            }
+
+            // Registra o Hook de teclado global para capturar F12
+            hookID = SetHook(HookCallback);
+        }
+
+        private void PositionInBottomRight()
+        {
+            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+
+            this.StartPosition = FormStartPosition.Manual;
+            this.Location = new Point(screenWidth - this.Width - 10, screenHeight - this.Height - 10);
+        }
+
+        private void btn_capture_Click(object sender, EventArgs e)
+        {
+            CapturarTela();
+        }
+        private void CapturarTela()
+        {
+            try
+            {
+                string fileName = $"Evidencia_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                string caminho = Path.Combine(evidenciasPath, fileName);
+
+                Bitmap captura = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
+                using (Graphics g = Graphics.FromImage(captura))
+                {
+                    g.CopyFromScreen(0, 0, 0, 0, captura.Size);
+                }
+
+                captura.Save(caminho, System.Drawing.Imaging.ImageFormat.Png);
+
+                SectionData lastSection = sections.Any() ? sections.Last() : sections.FirstOrDefault(s => s.Name == "Default");
+
+                if (lastSection == null)
+                {
+                    lastSection = new SectionData("Default");
+                    sections.Add(lastSection);
+                }
+
+                lastSection.Evidences.Add(caminho);
+
+                //  MessageBox.Show($"Evidência salva na seção '{lastSection.Name}'", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao capturar tela: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btn_pass_Click(object sender, EventArgs e)
+        {
+            GerarRelatorio("Sucesso");
+            Close();
+            RestaurarMain();
+        }
+
+        private void btn_fail_Click(object sender, EventArgs e)
+        {
+            GerarRelatorio("Falha");
+            this.Close();
+            RestaurarMain();
+        }
+
+        private void RestaurarMain()
+        {
+            MainApp formPrincipal = Application.OpenForms["MainApp"] as MainApp;
+            if (formPrincipal != null)
+            {
+                formPrincipal.RestaurarDaBandeja();
+            }
+        }
+        public void GerarRelatorio(string status)
+        {
+            try
+            {
+                string userName = GetWindowsUserName();
+                string testCaseName = this.testname;
+                string testSuiteName = this.suitename;
+                string ambiente = this.environment;
+                string data = DateTime.Now.ToString("dd/MM/yyyy");
+                string hora = DateTime.Now.ToString("HH:mm:ss");
+                string fileName = $"Relatorio_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                string filePath = Path.Combine(evidenciasPath, fileName);
+
+                // Criar documento MigraDoc
+                var document = new Document();
+                Section section = document.AddSection();
+
+                // 🔹 Adicionar cabeçalho com imagem em Base64 (caso queira ativar depois)
+                // AddHeaderWithImage(section);
+
+                // Definir margens para otimizar espaço
+                section.PageSetup.LeftMargin = Unit.FromCentimeter(1);
+                section.PageSetup.RightMargin = Unit.FromCentimeter(1);
+                section.PageSetup.TopMargin = Unit.FromCentimeter(2);
+                section.PageSetup.BottomMargin = Unit.FromCentimeter(1.5);
+
+                // 🔹 Adicionar título principal
+                Paragraph title = section.AddParagraph("Relatório de Execução");
+                title.Format.Font.Size = 16;
+                title.Format.Font.Bold = true;
+                title.Format.Alignment = ParagraphAlignment.Center;
+                title.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+
+                // 🔹 Adicionar status da execução
+                Paragraph statusexec = section.AddParagraph("Status da Execução");
+                statusexec.Format.Font.Size = 14;
+                statusexec.Format.Font.Bold = true;
+                statusexec.Format.Alignment = ParagraphAlignment.Center;
+                statusexec.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+
+                Paragraph statusexecValue = section.AddParagraph(status);
+                statusexecValue.Format.Font.Size = 14;
+                statusexecValue.Format.Font.Italic = true;
+                statusexecValue.Format.Alignment = ParagraphAlignment.Center;
+                statusexecValue.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+                statusexecValue.Format.Font.Color = status.ToLower() == "sucesso" ? Colors.Green : Colors.Red;
+
+                AddSeparator(section);
+
+                // 🔹 Criar Tabela para os Dados Informativos
+                Table table = section.AddTable();
+                table.Borders.Width = 0.0;
+                table.Format.Alignment = ParagraphAlignment.Left;
+                table.Rows.LeftIndent = 0;
+
+                // Definir colunas
+                Column col1 = table.AddColumn(Unit.FromCentimeter(3.5)); // Coluna Título
+                Column col2 = table.AddColumn(Unit.FromCentimeter(15));  // Coluna Valor
+
+                // Adicionar linhas à tabela
+                AddTableRow(table, "Usuário/Testador:", userName);
+                AddTableRow(table, "Data:", data);
+                AddTableRow(table, "Hora:", hora);
+                AddTableRow(table, "Suíte:", testSuiteName);
+                AddTableRow(table, "TestCase:", testCaseName);
+                AddTableRow(table, "Ambiente:", ambiente);
+                AddTableRow(table, "Status:", status);
+
+                // 🔹 Adicionando campo de observações
+                string observacoes = ShowInputDialog("Observações", "Insira observações adicionais para o relatório:");
+                AddTableRow(table, "Observações:", string.IsNullOrWhiteSpace(observacoes) ? "Nenhuma" : observacoes);
+
+                AddSeparator(section);
+
+                // 🔹 Adicionar as seções de evidências dinamicamente
+                section.AddParagraph("\nEvidências:").Format.Font.Bold = true;
+
+                if (sections.Count == 0)
+                {
+                    section.AddParagraph("Nenhuma evidência capturada.");
+                }
+                else
+                {
+                    foreach (var sec in sections)
+                    {
+                        section.AddParagraph($"\nSeção: {sec.Name}").Format.Font.Bold = true;
+
+                        if (sec.Evidences.Count == 0)
+                        {
+                            section.AddParagraph("Nenhuma evidência registrada.");
+                        }
+                        else
+                        {
+                            foreach (string imagem in sec.Evidences)
+                            {
+                                section.AddParagraph($"\nImagem: {Path.GetFileName(imagem)}");
+
+                                MigraDoc.DocumentObjectModel.Shapes.Image image = section.AddImage(imagem);
+                                image.Width = Unit.FromCentimeter(18.9);
+                                image.LockAspectRatio = true;
+                            }
+                        }
+                        AddSeparator(section);
+                    }
+                }
+
+                // 🔹 Renderizar e salvar como PDF
+                PdfDocumentRenderer renderer = new PdfDocumentRenderer(true)
+                {
+                    Document = document
+                };
+                renderer.RenderDocument();
+                renderer.PdfDocument.Save(filePath);
+
+                MessageBox.Show($"Relatório gerado em: {filePath}", "Relatório", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao gerar relatório: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void AddTableRow(Table table, string title, string value)
+        {
+            Row row = table.AddRow();
+            row.Cells[0].AddParagraph(title).Format.Font.Bold = true;
+
+            Paragraph valueParagraph = row.Cells[1].AddParagraph(value);
+
+            if (title.ToLower().Equals("status:"))
+            {
+                valueParagraph.Format.Font.Bold = true; // Deixa o status mais destacado
+                if (value.Equals("Sucesso"))
+                {
+                    valueParagraph.Format.Font.Color = Colors.Green; // Define cor verde para sucesso
+                }
+                else
+                {
+                    valueParagraph.Format.Font.Color = Colors.Red; // Define cor vermelha para erro/falha
+                }
+            }
+        }
+
+
+        private void AddSeparator(Section section)
+        {
+            Paragraph separator = section.AddParagraph();
+            separator.Format.Borders.Bottom.Width = 1;
+            separator.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+        }
+        private void AddHeaderWithImage(Section section)
+        {
+            var header = section.Headers.Primary;
+            Paragraph paragraph = header.AddParagraph();
+
+            // Adicionando a imagem do cabeçalho (Base64)
+            MigraDoc.DocumentObjectModel.Shapes.Image headerImage = paragraph.AddImage(Base64ToImage("<sua_imagem_base64_aqui>"));
+            headerImage.Width = Unit.FromCentimeter(18.9);
+            headerImage.LockAspectRatio = true;
+
+            paragraph.Format.Alignment = ParagraphAlignment.Center;
+            paragraph.Format.SpaceAfter = Unit.FromCentimeter(0.5);
+        }
+
+        // Função para converter Base64 para imagem MigraDoc
+        private string Base64ToImage(string base64String)
+        {
+            byte[] imageBytes = Convert.FromBase64String(base64String);
+            string imagePath = Path.Combine(Path.GetTempPath(), "header_image.png");
+            File.WriteAllBytes(imagePath, imageBytes);
+            return imagePath;
+        }
+
+
+        private string GetWindowsUserName()
+        {
+            try
+            {
+                return System.DirectoryServices.AccountManagement.UserPrincipal.Current.DisplayName;
+            }
+            catch
+            {
+                return Environment.UserName;
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            UnhookWindowsHookEx(hookID);
+        }
+
+        private static IntPtr SetHook(LowLevelKeyboardProc proc)
+        {
+            using (var curProcess = System.Diagnostics.Process.GetCurrentProcess())
+            using (var curModule = curProcess.MainModule)
+            {
+                return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+            }
+        }
+
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+        private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            const int WM_KEYDOWN = 0x0100;
+            if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            {
+                int vkCode = Marshal.ReadInt32(lParam);
+                if ((Keys)vkCode == Keys.F12)
+                {
+                    Application.OpenForms["Running"].Invoke((MethodInvoker)delegate
+                    {
+                        ((Running)Application.OpenForms["Running"]).CapturarTela();
+                    });
+                }
+            }
+            return CallNextHookEx(hookID, nCode, wParam, lParam);
+        }
+
+        private const int WH_KEYBOARD_LL = 13;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+
+        private void btn_newsection_Click(object sender, EventArgs e)
+        {
+            string newSectionName = ShowInputDialog("Nova Seção", "Digite o nome da nova seção:");
+
+            if (!string.IsNullOrWhiteSpace(newSectionName))
+            {
+                if (!sections.Any(s => s.Name == newSectionName))
+                {
+                    sections.Add(new SectionData(newSectionName));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Exibe uma caixa de diálogo para entrada do usuário.
+        /// </summary>
+        private string ShowInputDialog(string title, string promptText)
+        {
+            Form inputForm = new Form()
+            {
+                Width = 400,
+                Height = 220,
+                ControlBox = false,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterScreen,
+                Text = title
+            };
+
+            Label label = new Label() { Left = 20, Top = 20, Text = promptText, AutoSize = true };
+            TextBox textBox = new TextBox() { Left = 20, Top = 50, Width = 340 };
+            Button confirmButton = new Button() { Text = "Add", Left = 150, Width = 100, Top = 100, Height = 50, DialogResult = DialogResult.OK };
+
+            inputForm.Controls.Add(label);
+            inputForm.Controls.Add(textBox);
+            inputForm.Controls.Add(confirmButton);
+            inputForm.AcceptButton = confirmButton;
+
+            return inputForm.ShowDialog() == DialogResult.OK ? textBox.Text.Trim() : string.Empty;
+        }
+    }
+}

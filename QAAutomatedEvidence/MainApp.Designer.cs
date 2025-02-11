@@ -31,13 +31,15 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainApp));
             lbl_appver = new LinkLabel();
             group_userinfo = new GroupBox();
+            lbl_lastpath = new Label();
+            lnk_lastPath = new LinkLabel();
             lbl_testcase = new Label();
             lbl_suite = new Label();
             txt_scenario = new TextBox();
             txt_suite = new TextBox();
             lbl_testenv = new Label();
             cbb_env = new ComboBox();
-            label4 = new Label();
+            login = new Label();
             lbl_extra = new Label();
             datetime = new Label();
             lbl_data = new Label();
@@ -57,17 +59,19 @@
             lbl_appver.Size = new Size(115, 25);
             lbl_appver.TabIndex = 0;
             lbl_appver.TabStop = true;
-            lbl_appver.Text = "app ver 0.1.0";
+            lbl_appver.Text = "app ver 1.0.0";
             // 
             // group_userinfo
             // 
+            group_userinfo.Controls.Add(lbl_lastpath);
+            group_userinfo.Controls.Add(lnk_lastPath);
             group_userinfo.Controls.Add(lbl_testcase);
             group_userinfo.Controls.Add(lbl_suite);
             group_userinfo.Controls.Add(txt_scenario);
             group_userinfo.Controls.Add(txt_suite);
             group_userinfo.Controls.Add(lbl_testenv);
             group_userinfo.Controls.Add(cbb_env);
-            group_userinfo.Controls.Add(label4);
+            group_userinfo.Controls.Add(login);
             group_userinfo.Controls.Add(lbl_extra);
             group_userinfo.Controls.Add(datetime);
             group_userinfo.Controls.Add(lbl_data);
@@ -80,6 +84,26 @@
             group_userinfo.TabStop = false;
             group_userinfo.Text = "Dados do testador";
             group_userinfo.Enter += group_userinfo_Enter;
+            // 
+            // lbl_lastpath
+            // 
+            lbl_lastpath.AutoSize = true;
+            lbl_lastpath.Location = new Point(21, 391);
+            lbl_lastpath.Name = "lbl_lastpath";
+            lbl_lastpath.Size = new Size(87, 25);
+            lbl_lastpath.TabIndex = 15;
+            lbl_lastpath.Text = "Diretorio ";
+            // 
+            // lnk_lastPath
+            // 
+            lnk_lastPath.AutoSize = true;
+            lnk_lastPath.Location = new Point(144, 391);
+            lnk_lastPath.Name = "lnk_lastPath";
+            lnk_lastPath.Size = new Size(90, 25);
+            lnk_lastPath.TabIndex = 14;
+            lnk_lastPath.TabStop = true;
+            lnk_lastPath.Text = "linkLabel1";
+            lnk_lastPath.LinkClicked += lnk_lastPath_LinkClicked;
             // 
             // lbl_testcase
             // 
@@ -131,23 +155,23 @@
             cbb_env.Size = new Size(182, 33);
             cbb_env.TabIndex = 6;
             // 
-            // label4
+            // login
             // 
-            label4.AutoSize = true;
-            label4.Location = new Point(144, 146);
-            label4.Name = "label4";
-            label4.Size = new Size(61, 25);
-            label4.TabIndex = 5;
-            label4.Text = "Nome";
+            login.AutoSize = true;
+            login.Location = new Point(144, 146);
+            login.Name = "login";
+            login.Size = new Size(61, 25);
+            login.TabIndex = 5;
+            login.Text = "Nome";
             // 
             // lbl_extra
             // 
             lbl_extra.AutoSize = true;
             lbl_extra.Location = new Point(21, 146);
             lbl_extra.Name = "lbl_extra";
-            lbl_extra.Size = new Size(50, 25);
+            lbl_extra.Size = new Size(56, 25);
             lbl_extra.TabIndex = 4;
-            lbl_extra.Text = "extra";
+            lbl_extra.Text = "Login";
             // 
             // datetime
             // 
@@ -241,7 +265,7 @@
 
         private LinkLabel lbl_appver;
         private GroupBox group_userinfo;
-        private Label label4;
+        private Label login;
         private Label lbl_extra;
         private Label datetime;
         private Label lbl_data;
@@ -256,5 +280,7 @@
         private Label lbl_testcase;
         private Label lbl_suite;
         private TextBox txt_scenario;
+        private Label lbl_lastpath;
+        private LinkLabel lnk_lastPath;
     }
 }

@@ -8,4 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="PdfSharp-MigraDoc" Version="6.1.1" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.1" />
+  </ItemGroup>
+
 </Project>
