@@ -9,6 +9,8 @@ namespace QAAutomatedEvidence
         public MainApp()
         {
             InitializeComponent();
+            this.Icon = new Icon("Assets/app_icon.ico");
+
         }
 
         private void btn_start_Click(object sender, EventArgs e)
@@ -68,7 +70,7 @@ namespace QAAutomatedEvidence
             // Criar o NotifyIcon (ícone da bandeja)
             notifyIcon1 = new NotifyIcon
             {
-                Icon = SystemIcons.Application,
+                Icon = new Icon("Assets/app_icon.ico"),
                 ContextMenuStrip = trayMenu, // Definir o menu de contexto
                 Visible = false,
                 Text = "Meu App"

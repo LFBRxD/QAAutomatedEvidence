@@ -19,6 +19,8 @@ namespace QAAutomatedEvidence
 
         public Running(string scenario, string suite, string cbbIndex)
         {
+            this.Icon = new Icon("Assets/app_icon.ico");
+
             this.testname = scenario;
             this.suitename = suite;
             this.environment = cbbIndex;

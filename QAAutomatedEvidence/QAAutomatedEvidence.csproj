@@ -1,16 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <ApplicationIcon>Assets\app_icon.ico</ApplicationIcon>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Company>Flavio Ramos</Company>
+    <PackageReleaseNotes>MVP</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="PdfSharp-MigraDoc" Version="6.1.1" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.1" />
+    <None Include="Assets\app_icon.ico" Pack="true" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
